@@ -26,7 +26,7 @@ export async function POST(req: Request) {
         toolCallStreaming: true,
         tools: {
           ExtractSubject: tool({
-            description: "Context로부터 이 컨텍스트의 제목을 추출합니다.",
+            description: "Extracts a subject from the context injected into the system prompt.",
             parameters: z.object({ subject: z.string() }),
             execute: async ({ subject }) => subject, // no-op extract tool
           }),
