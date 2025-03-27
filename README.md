@@ -1,17 +1,30 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Mistral OCR PDF Parser
+
+> A powerful document processing solution that combines OCR capabilities with interactive AI chat interface.
+
+## 🚀 Features
+
+- **PDF Processing**: Extract text and images from PDF documents with layout preservation
+- **OCR Integration**: Leverage Mistral's OCR technology for accurate text recognition
+- **ChatPDF**: Interact with your documents through a natural language interface
+- **Asset Management**: View and manage extracted images with zoom functionality
+
+Built with Next.js, AI SDK, and Mistral API, this application streamlines document analysis workflows by providing a seamless integration between document processing and conversational AI.
+
+Get started by uploading a PDF or trying our sample document!
+
+## 📹 Demo
+
+https://github.com/user-attachments/assets/d29a6c28-0b1f-4dd7-8564-f217bedbf23e
 
 ## Getting Started
 
 First, run the development server:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
+
 pnpm dev
-# or
-bun dev
+
 ```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
