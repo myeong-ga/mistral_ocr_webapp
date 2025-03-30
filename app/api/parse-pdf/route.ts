@@ -270,6 +270,14 @@ Meanwhile, suppliers' delivery times lengthened to the greatest extent since Oct
     },
   }
 
+  // 저장된 모든 이미지 정보 수집
+  const storedAssets = Object.values(savedImages).map((asset) => ({
+    id: asset.id,
+    originalId: asset.originalId,
+    publicPath: asset.publicPath,
+    mimeType: asset.mimeType,
+  }))
+
   // 처리된 응답 형식과 일치하는 전체 목업 응답 생성
   return {
     text: sampleMarkdown,
@@ -323,7 +331,7 @@ Meanwhile, suppliers' delivery times lengthened to the greatest extent since Oct
         },
       },
     ],
-    storedAssets: Object.values(savedImages),
+    storedAssets: storedAssets, // 명시적으로 storedAssets 배열 포함
     usage: {
       pages_processed: 1,
       doc_size_bytes: 1024,
@@ -437,22 +445,33 @@ async function processOcrResponse(ocrResponse: OCRResponse, sessionId: string) {
     processedPages.flatMap((page) =>
       page.images.map(async (img) => {
         // 이미지 URL에서 publicPath 추출
-        const publicPath = img.url.startsWith("/") ? img.url : null
+        const publicPath = img.url
         if (!publicPath) return null
 
-        // 파일 이름 추출
+        // 파일 이름 추출 (URL에서 마지막 부분)
         const fileName = publicPath.split("/").pop() || ""
-        const id = fileName.split(".")[0]
+        const id = fileName.split(".")[0] || img.id
+
+        // MIME 타입 추출 (URL에서 확장자 기반)
+        const extension = fileName.split(".").pop() || "png"
+        const mimeType = `image/${extension}`
 
         return {
           id,
           originalId: img.id,
           publicPath,
-          mimeType: "image/png", // 기본값
+          mimeType,
         }
       }),
     ),
   )
+
+  // null 값 필터링 및 중복 제거
+  const storedAssets = allStoredAssets
+    .filter(Boolean)
+    .filter((asset, index, self) => index === self.findIndex((a) => a?.id === asset?.id))
+
+  console.log(`Processed ${processedPages.length} pages with ${storedAssets.length} stored assets`)
 
   // 처리된 데이터 반환
   return {
@@ -461,7 +480,7 @@ async function processOcrResponse(ocrResponse: OCRResponse, sessionId: string) {
     sessionId: sessionId,
     pages: processedPages,
     images: allImages,
-    storedAssets: allStoredAssets.filter(Boolean),
+    storedAssets: storedAssets, // 명시적으로 storedAssets 배열 포함
     usage: {
       pages_processed: usageInfo.pagesProcessed || 0,
       doc_size_bytes: usageInfo.docSizeBytes || 0,
