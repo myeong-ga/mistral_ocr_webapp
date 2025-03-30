@@ -15,7 +15,6 @@ interface ChatInterfaceProps {
 }
 
 export function ChatInterface({ onClose, documentTitle, rawText }: ChatInterfaceProps) {
-  console.log("ChatInterface rendered :", documentTitle, rawText);
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   // useChat 훅 사용
@@ -55,7 +54,7 @@ export function ChatInterface({ onClose, documentTitle, rawText }: ChatInterface
         </Button>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-background">
+      <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-background" style={{ maxHeight: "calc(100% - 120px)" }}>
         {messages.map((message) => (
           <div key={message.id} className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}>
             <div
@@ -99,7 +98,6 @@ export function ChatInterface({ onClose, documentTitle, rawText }: ChatInterface
                               <h4 className="mb-1 text-primary font-medium">Tool: {toolName || ""}</h4>
                               <div className="flex flex-col gap-1 text-foreground">
                                 {args?.subject && <div>Subject: {args.subject}</div>}
-                              
                               </div>
                             </div>
                           )

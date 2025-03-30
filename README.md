@@ -19,7 +19,26 @@ https://github.com/user-attachments/assets/d29a6c28-0b1f-4dd7-8564-f217bedbf23e
 
 ## Getting Started
 
-First, run the development server:
+Configure the required API keys in the `.env.local` file:
+
+
+```plaintext
+# Required for OCR functionality
+MISTRAL_API_KEY=your_mistral_api_key_here
+
+# Required for ChatPDF functionality
+ANTHROPIC_API_KEY=your_anthropic_api_key_here
+```
+
+You need to obtain:
+
+- A Mistral API key for the OCR functionality to process PDF documents
+- An Anthropic API key for the ChatPDF feature to enable AI-powered document chat
+
+
+Without these API keys, the respective features will not work properly.
+
+Run the development server:
 
 ```bash
 

@@ -96,23 +96,16 @@ export function ResultsViewer({ results, originalFile }: ResultsViewerProps) {
       // 현재 스크롤 위치 저장
       scrollPositionRef.current = window.scrollY
 
-      // 스크롤 방지
-      document.body.style.overflow = "hidden"
-      document.body.style.position = "fixed"
-      document.body.style.top = `-${scrollPositionRef.current}px`
-      document.body.style.width = "100%"
+      // 스크롤 방지 코드 제거 - 페이지 스크롤을 허용하도록 함
     } else {
-      // 스크롤 복원
-      document.body.style.overflow = ""
-      document.body.style.position = ""
-      document.body.style.top = ""
-      document.body.style.width = ""
+      // 스크롤 복원 코드도 제거 - 페이지 스크롤이 항상 가능하도록 함
 
-      // 저장된 스크롤 위치로 복원
+      // 저장된 스크롤 위치로 복원 (이 부분은 유지)
       window.scrollTo(0, scrollPositionRef.current)
     }
 
     return () => {
+      // 클린업 함수에서도 스크롤 관련 스타일 제거
       document.body.style.overflow = ""
       document.body.style.position = ""
       document.body.style.top = ""
@@ -201,6 +194,7 @@ export function ResultsViewer({ results, originalFile }: ResultsViewerProps) {
               height: height ? `calc(${height}px - 200px)` : "calc(100vh - 200px)",
               position: "sticky",
               top: "1rem",
+              zIndex: 10, // 스크롤 시 다른 요소 위에 표시되도록 z-index 추가
             }}
           >
             <ChatInterface onClose={toggleChat} documentTitle={originalFile?.name} rawText={llm_context_md} />
