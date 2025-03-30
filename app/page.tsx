@@ -150,11 +150,11 @@ export default function Home() {
           <h1 className="text-3xl font-bold">Mistral OCR PDF Parser</h1>
           <div className="flex items-center gap-2">
             <Button
-              variant="outline"
+              variant="ghost"
               size="icon"
               onClick={toggleInfoPanel}
               aria-label="Show information"
-              className={`${showInfo ? "school-icon-button-outline" : "school-icon-button"}`}
+              className={showInfo ? "bg-accent" : ""}
             >
               <School className="h-5 w-5" />
             </Button>
@@ -164,7 +164,7 @@ export default function Home() {
 
         {showInfo && <InfoPanel onClose={toggleInfoPanel} />}
 
-        <div className="grid grid-cols-1 lg:grid-cols-6 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-9 gap-8">
           <div className="space-y-6 lg:col-span-2">
             <div className="bg-card rounded-lg p-6 shadow-sm">
               <h2 className="text-xl font-semibold mb-4">Upload PDF</h2>
@@ -217,7 +217,7 @@ export default function Home() {
             )}
           </div>
 
-          <div className="bg-card rounded-lg p-6 shadow-sm lg:col-span-4">
+          <div className="bg-card rounded-lg p-6 shadow-sm lg:col-span-7">
             {results ? (
               <ResultsViewer results={results} originalFile={file} />
             ) : (

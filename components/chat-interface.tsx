@@ -15,6 +15,7 @@ interface ChatInterfaceProps {
 }
 
 export function ChatInterface({ onClose, documentTitle, rawText }: ChatInterfaceProps) {
+  console.log("ChatInterface rendered :", documentTitle, rawText);
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   // useChat 훅 사용

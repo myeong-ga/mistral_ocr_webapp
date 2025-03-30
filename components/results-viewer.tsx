@@ -168,6 +168,11 @@ export function ResultsViewer({ results, originalFile }: ResultsViewerProps) {
   }
 
   const currentPageData = results.pages[currentPage]
+  let llm_context_md = ""
+  if (currentPageData) {
+    const { markdown, rawMarkdown, images } = currentPageData
+    llm_context_md += markdown
+  }
 
   // Custom renderer for images to handle missing or invalid URLs
   const imageRenderer = (props: ImageRendererProps) => {
@@ -187,23 +192,23 @@ export function ResultsViewer({ results, originalFile }: ResultsViewerProps) {
   return (
     <div className="space-y-4" ref={containerRef}>
       <h2 className="text-xl font-semibold mb-4">Results</h2>
-      <div className="grid grid-cols-1 lg:grid-cols-6 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-7 gap-4">
         {/* 채팅 인터페이스 */}
         {isChatOpen && (
           <div
-            className="lg:col-span-2 bg-card rounded-lg shadow-sm overflow-hidden"
+            className="lg:col-span-3 bg-card rounded-lg shadow-sm overflow-hidden"
             style={{
               height: height ? `calc(${height}px - 200px)` : "calc(100vh - 200px)",
               position: "sticky",
               top: "1rem",
             }}
           >
-            <ChatInterface onClose={toggleChat} documentTitle={originalFile?.name} rawText={results.rawText} />
+            <ChatInterface onClose={toggleChat} documentTitle={originalFile?.name} rawText={llm_context_md} />
           </div>
         )}
 
         {/* 메인 콘텐츠 */}
-        <div className={`${isChatOpen ? "lg:col-span-4" : "lg:col-span-6"}`}>
+        <div className={`${isChatOpen ? "lg:col-span-4" : "lg:col-span-7"}`}>
           <Tabs defaultValue="reconstructed" value={activeTab} onValueChange={setActiveTab}>
             <div className="flex justify-between items-center mb-4">
               <TabsList>
