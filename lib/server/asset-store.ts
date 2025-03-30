@@ -2,6 +2,7 @@ import "server-only"
 import fs from "fs"
 import path from "path"
 import { v4 as uuidv4 } from "uuid"
+import { put } from "@vercel/blob"
 
 // 이미지 저장 경로 설정
 const ASSET_DIR = path.join(process.cwd(), "public", "assets", "ocr-images")
@@ -10,7 +11,7 @@ const ASSET_DIR = path.join(process.cwd(), "public", "assets", "ocr-images")
 interface SavedImageAsset {
   id: string
   originalId: string
-  filePath: string
+  filePath?: string // 선택적 - Blob에서는 사용하지 않음
   publicPath: string
   mimeType: string
   width?: number
@@ -47,7 +48,100 @@ function extractBase64Data(base64Data: string): string {
 }
 
 /**
- * 이미지 맵을 사용하여 이미지를 파일 시스템에 저장
+ * 파일 시스템에 이미지 저장 (로컬 개발 환경용)
+ */
+async function storeImageToFileSystem(
+  imageId: string,
+  base64Data: string,
+  sessionDir: string,
+): Promise<SavedImageAsset> {
+  try {
+    // MIME 타입 추출
+    const mimeType = getMimeTypeFromBase64(base64Data)
+
+    // 파일 확장자 결정
+    const extension = mimeType.split("/")[1] || "png"
+
+    // 파일명 생성 (원본 ID + UUID)
+    const fileName = `${imageId}-${uuidv4().slice(0, 8)}.${extension}`
+
+    // 파일 경로 설정
+    const filePath = path.join(sessionDir, fileName)
+
+    // 공개 경로 설정 (클라이언트에서 접근 가능한 경로)
+    const publicPath = `/assets/ocr-images/${path.basename(sessionDir)}/${fileName}`
+
+    // Base64 데이터 추출
+    const base64Content = extractBase64Data(base64Data)
+
+    // 파일로 저장
+    fs.writeFileSync(filePath, Buffer.from(base64Content, "base64"))
+
+    // 저장된 이미지 정보 기록
+    return {
+      id: fileName.split(".")[0],
+      originalId: imageId,
+      filePath,
+      publicPath,
+      mimeType,
+    }
+  } catch (error) {
+    console.error(`Failed to save image ${imageId} to file system:`, error)
+    throw error
+  }
+}
+
+/**
+ * Vercel Blob Storage에 이미지 저장 (프로덕션 환경용)
+ */
+async function storeImageToBlob(imageId: string, base64Data: string, sessionId: string): Promise<SavedImageAsset> {
+  try {
+    // MIME 타입 추출
+    const mimeType = getMimeTypeFromBase64(base64Data)
+
+    // 파일 확장자 결정
+    const extension = mimeType.split("/")[1] || "png"
+
+    // 파일명 생성 (세션 ID 포함)
+    const fileName = `ocr-images/${sessionId}/${imageId}-${uuidv4().slice(0, 8)}.${extension}`
+
+    // Base64 데이터 추출
+    const base64Content = extractBase64Data(base64Data)
+
+    // Buffer를 Blob 객체로 변환 (브라우저 환경에서는 이렇게 하지만 Node.js에서는 다른 방법 필요)
+    // 수정: Buffer 대신 base64 문자열을 직접 사용
+    const buffer = Buffer.from(base64Content, "base64")
+
+    // Buffer를 Uint8Array로 변환
+    const uint8Array = new Uint8Array(buffer)
+
+    // Uint8Array를 Blob으로 변환
+    const blob = new Blob([uint8Array], { type: mimeType })
+
+    // Vercel Blob Storage에 업로드
+    const uploadedBlob = await put(fileName, blob, {
+      contentType: mimeType,
+      access: "public",
+    })
+
+    console.log(`Image saved to Blob Storage: ${uploadedBlob.url}`)
+
+    // 저장된 이미지 정보 기록
+    return {
+      id: fileName.split("/").pop()?.split(".")[0] || imageId,
+      originalId: imageId,
+      publicPath: uploadedBlob.url,
+      mimeType,
+    }
+  } catch (error) {
+    console.error(`Failed to save image ${imageId} to Blob Storage:`, error)
+    throw error
+  }
+}
+
+/**
+ * 이미지 맵을 사용하여 이미지를 저장
+ * 환경에 따라 파일 시스템 또는 Blob Storage 사용
  */
 export async function storeImagesFromMap(
   imageMap: ImageMap,
@@ -56,72 +150,72 @@ export async function storeImagesFromMap(
   // 세션 ID가 없으면 생성
   const session = sessionId || uuidv4()
 
-  // 세션별 디렉토리 경로
-  const sessionDir = path.join(ASSET_DIR, session)
-
-  // 디렉토리 존재 확인
-  ensureDirectoryExists(sessionDir)
-
   // 저장된 이미지 정보를 담을 객체
   const savedImages: Record<string, SavedImageAsset> = {}
 
-  // 이미지 맵의 각 항목을 처리
-  for (const [imageId, base64Data] of Object.entries(imageMap)) {
-    try {
-      // MIME 타입 추출
-      const mimeType = getMimeTypeFromBase64(base64Data)
+  // Vercel 환경 여부 확인
+  const isVercelEnvironment = process.env.VERCEL === "1"
 
-      // 파일 확장자 결정
-      const extension = mimeType.split("/")[1] || "png"
+  if (!isVercelEnvironment) {
+    // 로컬 개발 환경: 파일 시스템 사용
+    console.log(`Using file system storage for session ${session}`)
 
-      // 파일명 생성 (원본 ID + UUID)
-      const fileName = `${imageId}-${uuidv4().slice(0, 8)}.${extension}`
+    // 세션별 디렉토리 경로
+    const sessionDir = path.join(ASSET_DIR, session)
 
-      // 파일 경로 설정
-      const filePath = path.join(sessionDir, fileName)
+    // 디렉토리 존재 확인
+    ensureDirectoryExists(sessionDir)
 
-      // 공개 경로 설정 (클라이언트에서 접근 가능한 경로)
-      const publicPath = `/assets/ocr-images/${session}/${fileName}`
-
-      // Base64 데이터 추출
-      const base64Content = extractBase64Data(base64Data)
-
-      // 파일로 저장
-      fs.writeFileSync(filePath, Buffer.from(base64Content, "base64"))
-
-      // 저장된 이미지 정보 기록
-      savedImages[imageId] = {
-        id: fileName.split(".")[0],
-        originalId: imageId,
-        filePath,
-        publicPath,
-        mimeType,
+    // 이미지 맵의 각 항목을 처리
+    for (const [imageId, base64Data] of Object.entries(imageMap)) {
+      try {
+        // 파일 시스템에 이미지 저장
+        savedImages[imageId] = await storeImageToFileSystem(imageId, base64Data, sessionDir)
+        console.log(`Image saved to file system: ${savedImages[imageId].publicPath}`)
+      } catch (error) {
+        console.error(`Failed to save image ${imageId}:`, error)
       }
+    }
 
-      console.log(`Image saved: ${publicPath}`)
-    } catch (error) {
-      console.error(`Failed to save image ${imageId}:`, error)
+    // 세션 정보 저장 (나중에 정리를 위해)
+    const sessionInfoPath = path.join(sessionDir, "session-info.json")
+    fs.writeFileSync(
+      sessionInfoPath,
+      JSON.stringify({
+        sessionId: session,
+        createdAt: new Date().toISOString(),
+        imageCount: Object.keys(savedImages).length,
+      }),
+    )
+  } else {
+    // Vercel 환경: Blob Storage 사용
+    console.log(`Using Blob Storage for session ${session}`)
+
+    // 이미지 맵의 각 항목을 처리
+    for (const [imageId, base64Data] of Object.entries(imageMap)) {
+      try {
+        // Blob Storage에 이미지 저장
+        savedImages[imageId] = await storeImageToBlob(imageId, base64Data, session)
+      } catch (error) {
+        console.error(`Failed to save image ${imageId}:`, error)
+      }
     }
   }
-
-  // 세션 정보 저장 (나중에 정리를 위해)
-  const sessionInfoPath = path.join(sessionDir, "session-info.json")
-  fs.writeFileSync(
-    sessionInfoPath,
-    JSON.stringify({
-      sessionId: session,
-      createdAt: new Date().toISOString(),
-      imageCount: Object.keys(savedImages).length,
-    }),
-  )
 
   return savedImages
 }
 
 /**
  * 세션 ID로 저장된 이미지 목록 가져오기
+ * 로컬 개발 환경에서만 작동 (Vercel 환경에서는 빈 배열 반환)
  */
 export function getStoredImagesBySession(sessionId: string): SavedImageAsset[] {
+  // Vercel 환경에서는 작동하지 않음
+  if (process.env.VERCEL === "1") {
+    console.log("getStoredImagesBySession not supported in Vercel environment")
+    return []
+  }
+
   const sessionDir = path.join(ASSET_DIR, sessionId)
 
   if (!fs.existsSync(sessionDir)) {
@@ -161,8 +255,15 @@ export function getStoredImagesBySession(sessionId: string): SavedImageAsset[] {
 
 /**
  * 세션 ID로 저장된 이미지 삭제
+ * 로컬 개발 환경에서만 작동 (Vercel 환경에서는 false 반환)
  */
 export function deleteStoredImagesBySession(sessionId: string): boolean {
+  // Vercel 환경에서는 작동하지 않음
+  if (process.env.VERCEL === "1") {
+    console.log("deleteStoredImagesBySession not supported in Vercel environment")
+    return false
+  }
+
   const sessionDir = path.join(ASSET_DIR, sessionId)
 
   if (!fs.existsSync(sessionDir)) {

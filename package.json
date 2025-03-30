@@ -42,6 +42,7 @@
     "@radix-ui/react-toggle-group": "^1.1.1",
     "@radix-ui/react-tooltip": "^1.1.8",
     "@tailwindcss/typography": "latest",
+    "@vercel/blob": "^0.19.0",
     "ai": "^4.2.0",
     "autoprefixer": "^10.4.20",
     "class-variance-authority": "^0.7.1",

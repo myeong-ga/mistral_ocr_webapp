@@ -44,8 +44,7 @@ export async function POST(req: Request) {
         maxSteps: 3,
         onStepFinish: ({ toolCalls, toolResults, finishReason, usage, text }) => {
           stepCounter++
-          console.log(`
-📊 Step ${stepCounter} Finished:`)
+          console.log(`📊 Step ${stepCounter} Finished:`)
           console.log("🏁 Finish Reason:", finishReason)
           console.log("💬 Model Response:", text)
 
