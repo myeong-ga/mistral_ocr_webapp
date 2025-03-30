@@ -34,7 +34,7 @@ You need to obtain:
 
 - A Mistral API key for the OCR functionality to process PDF documents
 - An Anthropic API key for the ChatPDF feature to enable AI-powered document chat
-
+- For image rendering, deployment to a host may be necessary. If the deployed host operates in a serverless environment without a filesystem, a separate blob storage service should be used. This project is designed to run locally without requiring a blob service.
 
 Without these API keys, the respective features will not work properly.
 
