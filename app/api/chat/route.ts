@@ -41,7 +41,7 @@ export async function POST(req: Request) {
             execute: async ({ subject }) => subject, // no-op extract tool
           }),
         },
-        maxSteps: 3,
+        maxSteps: 10,
         onStepFinish: ({ toolCalls, toolResults, finishReason, usage, text }) => {
           stepCounter++
           console.log(`📊 Step ${stepCounter} Finished:`)
