@@ -12,7 +12,12 @@ export async function POST(req: Request) {
        
        ${documentContent}
        
-       Ensure that the 'ExtractSubject' tool is used for the user's first message.`
+       Ensure that the 'ExtractSubject' tool is used for the user's first message.
+       For data visualization:
+- Proactively apply visualizations whenever possible.
+- Use <img alt="Extracted image 1" class="w-full h-full object-contain" src="/assets/ocr-images/...jpeg"> 
+  for image suggestions.
+       `
     : "You are a helpful assistant."
 
   return createDataStreamResponse({
