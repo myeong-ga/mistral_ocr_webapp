@@ -28,6 +28,9 @@ MISTRAL_API_KEY=your_mistral_api_key_here
 
 # Required for ChatPDF functionality
 ANTHROPIC_API_KEY=your_anthropic_api_key_here
+
+# Maybe Required for Serverless deployment for Image Rendering during ChatPDF chatting session
+BLOB_READ_WRITE_TOKEN="your_blob_read_write_token"
 ```
 
 You need to obtain:
