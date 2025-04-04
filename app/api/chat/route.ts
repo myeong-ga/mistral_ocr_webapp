@@ -1,6 +1,7 @@
 import { anthropic } from "@ai-sdk/anthropic"
 import { createDataStreamResponse, streamText, tool } from "ai"
 import { z } from "zod"
+import { google } from '@ai-sdk/google';
 
 export async function POST(req: Request) {
   const { messages, documentContent } = await req.json()
@@ -23,14 +24,15 @@ export async function POST(req: Request) {
   return createDataStreamResponse({
     execute: async (dataStream) => {
       const result = streamText({
-        model: anthropic("claude-3-5-sonnet-latest"),
-        providerOptions: {
-          anthropic: {
-            cache_control: {
-              type: "ephemeral",
-            },
-          },
-        },
+        // model: anthropic("claude-3-5-sonnet-latest"),
+        // providerOptions: {
+        //   anthropic: {
+        //     cache_control: {
+        //       type: "ephemeral",
+        //     },
+        //   },
+        // },
+        model: google('gemini-2.5-pro-exp-03-25'),
         system: systemMessage,
         messages,
         toolCallStreaming: true,
@@ -44,8 +46,7 @@ export async function POST(req: Request) {
         maxSteps: 3,
         onStepFinish: ({ toolCalls, toolResults, finishReason, usage, text }) => {
           stepCounter++
-          console.log(`
-📊 Step ${stepCounter} Finished:`)
+          console.log(`📊 Step ${stepCounter} Finished:`)
           console.log("🏁 Finish Reason:", finishReason)
           console.log("💬 Model Response:", text)
 
