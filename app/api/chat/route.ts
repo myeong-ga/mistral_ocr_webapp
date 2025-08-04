@@ -9,15 +9,15 @@ export async function POST(req: Request) {
 
   const systemMessage = documentContent
     ? `You are a helpful assistant that answers questions about the following document content. 
-       Use this content to provide accurate answers:
+       Use this content to provide accurate answers:    
        
        ${documentContent}
        
-       Ensure that the 'ExtractSubject' tool is used for the user's first message.
+    
        For data visualization:
 - Proactively apply visualizations whenever possible.
-- Use <img alt="Extracted image 1" class="w-full h-full object-contain" src="/assets/ocr-images/...jpeg"> 
-  for image suggestions.
+- Use ![alt text](/assets/ocr-images/...jpeg)   for image suggestions.
+
        `
     : "You are a helpful assistant."
 
