@@ -32,7 +32,7 @@ export async function POST(req: Request) {
         //     },
         //   },
         // },
-        model: google('gemini-2.5-pro-exp-03-25'),
+        model: google('gemini-2.5-flash'),
         system: systemMessage,
         messages,
         toolCallStreaming: true,
