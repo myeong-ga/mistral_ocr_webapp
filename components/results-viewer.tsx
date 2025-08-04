@@ -79,6 +79,8 @@ export function ResultsViewer({ results, originalFile }: ResultsViewerProps) {
   const [showImageInfo, setShowImageInfo] = useState<string | null>(null)
   const [selectedAsset, setSelectedAsset] = useState<StoredAsset | null>(null)
   const [isChatOpen, setIsChatOpen] = useState(false)
+  const [chatWidth, setChatWidth] = useState(42) // 기본값: 42% (3/7 비율)
+  const [isResizing, setIsResizing] = useState(false)
   const { height } = useWindowSize()
   const containerRef = useRef<HTMLDivElement>(null)
   const scrollPositionRef = useRef(0)
@@ -161,11 +163,6 @@ export function ResultsViewer({ results, originalFile }: ResultsViewerProps) {
   }
 
   const currentPageData = results.pages[currentPage]
-  let llm_context_md = ""
-  if (currentPageData) {
-    const { markdown, rawMarkdown, images } = currentPageData
-    llm_context_md += markdown
-  }
 
   // Custom renderer for images to handle missing or invalid URLs
   const imageRenderer = (props: ImageRendererProps) => {
@@ -182,27 +179,98 @@ export function ResultsViewer({ results, originalFile }: ResultsViewerProps) {
     setIsChatOpen(!isChatOpen)
   }
 
+  // 전체화면 토글 핸들러
+  const toggleChatFullscreen = () => {
+    if (chatWidth < 70) {
+      // 현재 폭이 최대값보다 작으면 최대값으로 확장
+      setChatWidth(70)
+    } else {
+      // 이미 최대값이면 기본값으로 되돌리기
+      setChatWidth(42)
+    }
+  }
+
+  // 리사이즈 핸들러
+  const handleMouseDown = (e: React.MouseEvent) => {
+    setIsResizing(true)
+    e.preventDefault()
+  }
+
+  const handleMouseMove = (e: MouseEvent) => {
+    if (!isResizing || !containerRef.current) return
+    
+    const containerRect = containerRef.current.getBoundingClientRect()
+    const newWidth = ((e.clientX - containerRect.left) / containerRect.width) * 100
+    
+    // 최소 25%, 최대 70%로 제한
+    const clampedWidth = Math.min(Math.max(newWidth, 25), 70)
+    setChatWidth(clampedWidth)
+  }
+
+  const handleMouseUp = () => {
+    setIsResizing(false)
+  }
+
+  // 마우스 이벤트 리스너 등록
+  useEffect(() => {
+    if (isResizing) {
+      document.addEventListener('mousemove', handleMouseMove)
+      document.addEventListener('mouseup', handleMouseUp)
+      document.body.style.cursor = 'col-resize'
+      document.body.style.userSelect = 'none'
+    }
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove)
+      document.removeEventListener('mouseup', handleMouseUp)
+      document.body.style.cursor = ''
+      document.body.style.userSelect = ''
+    }
+  }, [isResizing])
+
   return (
     <div className="space-y-4" ref={containerRef}>
       <h2 className="text-xl font-semibold mb-4">Results</h2>
-      <div className="grid grid-cols-1 lg:grid-cols-7 gap-4">
+      
+      <div className="flex gap-4">
         {/* 채팅 인터페이스 */}
         {isChatOpen && (
-          <div
-            className="lg:col-span-3 bg-card rounded-lg shadow-sm overflow-hidden"
-            style={{
-              height: height ? `calc(${height}px - 200px)` : "calc(100vh - 200px)",
-              position: "sticky",
-              top: "1rem",
-              zIndex: 10, // 스크롤 시 다른 요소 위에 표시되도록 z-index 추가
-            }}
-          >
-            <ChatInterface onClose={toggleChat} documentTitle={originalFile?.name} rawText={llm_context_md} />
-          </div>
+          <>
+            <div
+              className="bg-card rounded-lg shadow-sm overflow-hidden flex-shrink-0"
+              style={{
+                width: `${chatWidth}%`,
+                height: height ? `calc(${height}px - 200px)` : "calc(100vh - 200px)",
+                position: "sticky",
+                top: "1rem",
+                zIndex: 10,
+              }}
+            >
+              <ChatInterface 
+                onClose={toggleChat} 
+                documentTitle={originalFile?.name} 
+                rawText={results.text}
+                isFullscreen={chatWidth >= 70}
+                onToggleFullscreen={toggleChatFullscreen}
+              />
+            </div>
+            
+            {/* 리사이즈 핸들 */}
+            <div
+              className="w-1 bg-border hover:bg-primary cursor-col-resize flex-shrink-0 rounded-full transition-colors duration-200"
+              onMouseDown={handleMouseDown}
+              style={{
+                height: height ? `calc(${height}px - 200px)` : "calc(100vh - 200px)",
+                position: "sticky",
+                top: "1rem",
+                zIndex: 11,
+              }}
+            />
+          </>
         )}
 
         {/* 메인 콘텐츠 */}
-        <div className={`${isChatOpen ? "lg:col-span-4" : "lg:col-span-7"}`}>
+        <div className="flex-1 min-w-0">
           <Tabs defaultValue="reconstructed" value={activeTab} onValueChange={setActiveTab}>
             <div className="flex justify-between items-center mb-4">
               <TabsList>

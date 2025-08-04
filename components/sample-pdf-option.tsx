@@ -9,14 +9,8 @@ interface SamplePdfOptionProps {
 
 export function SamplePdfOption({ onSelect }: SamplePdfOptionProps) {
   // Create a sample PDF with PMI data and graph
-  const createSamplePdf = async () => {
+  const createSamplePdf = () => {
     try {
-      // Fetch the PMI graph image
-      const logoResponse = await fetch(
-        "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/img-1.jpeg-0afae6fb-OLkYscR0PxBzexzNs6sQJ6v8H4dKv2.jpeg",
-      )
-      const logoBlob = await logoResponse.blob()
-
       // Create a simple PDF with text content and the PMI graph
       // This is a simplified approach - in a real app, you'd use a PDF generation library
       const pdfContent = new Uint8Array([
